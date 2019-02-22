@@ -1,0 +1,10 @@
+# Text files
+*.txt
+*.json
+
+# Emacs files
+.\#*.*
+
+# Compressed files
+*.tar.*
+*.zip
