@@ -16,11 +16,12 @@ type DatabaseHandler struct {
 	database *sql.DB
 }
 
+// A struct  that denotes a row in the database
 type DataRow struct {
 	pk         int
 	filename   string
 	uploadTime string
-	//path       string
+	path       string
 }
 
 func InitDatabase() {
