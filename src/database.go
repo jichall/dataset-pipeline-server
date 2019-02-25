@@ -30,12 +30,7 @@ func InitDatabase() {
 		os.Mkdir(folder, os.FileMode(0775))
 	}
 
-	db, err := sql.Open("sqlite3", folder+"/"+database)
-
-	if err != nil {
-		log.Fatalf("[!] Something went wrong trying to open the database %s",
-			err.Error())
-	}
+	db := GetHandler()
 
 	var table string = "CREATE TABLE IF NOT EXISTS TB_FILE (FILE_PK INTEGER" +
 		"PRIMARY KEY AUTO_INCREMENT, FILE_NAME CHAR(1024), FILE_DATE " +
@@ -43,7 +38,7 @@ func InitDatabase() {
 
 	log.Printf("[+] Creating the storage table")
 
-	stmt, err := db.Prepare(table)
+	stmt, err := db.database.Prepare(table)
 	_, err = stmt.Exec()
 
 	if err != nil {
@@ -52,21 +47,32 @@ func InitDatabase() {
 	}
 }
 
-// Gets a database handler
-func GetHandler() *DatabaseHandler {
-	db, err := sql.Open("sqlite3", folder+"/"+database)
+// Gets a database handler, if any argument is provided it expects
+// to be the test database
+func GetHandler(params ...string) *DatabaseHandler {
+
+	var db *sql.DB = nil
+	var err error = nil
+
+	if len(params) != 0 && params[0] == "test" {
+		db, err = sql.Open("sqlite3", folder+"/test.db")
+	} else {
+		db, err = sql.Open("sqlite3", folder+"/"+database)
+	}
 
 	if err != nil {
-		log.Fatalf("[!] Couldn't get a sqlite connection")
+		log.Fatalf("[!] Something went wrong trying to open the database %s",
+			err.Error())
 	}
 
 	return &DatabaseHandler{db}
 }
 
-// Retrieve information from the default database
-func (db DatabaseHandler) Retrieve() (sql.Result, error) {
+// Retrieve information from the default database. Additional settings may
+// be included using the params argument such as a where clause.
+func (db DatabaseHandler) Retrieve(params ...string) (sql.Result, error) {
 
-	stmt, err := db.database.Prepare("SELECT * FROM TB_FILE")
+	stmt, err := db.database.Prepare("SELECT * FROM TB_FILE" + params[0])
 
 	if err != nil {
 		return nil, err
@@ -78,8 +84,10 @@ func (db DatabaseHandler) Retrieve() (sql.Result, error) {
 // Adds a database entry
 func (db DatabaseHandler) Insert(filename, uploadTime, filepath string) (sql.Result, error) {
 
-	stmt, err := db.database.Prepare("INSERT INTO TB_FILE (FILE_NAME, FILE_DATE," +
-		"FILE_PATH) VALUES (?, ?, ?)")
+	// A NULL value must be included to make usage of the FILE_PK variable that
+	// is an auto increment field automatically in sqlite
+	stmt, err := db.database.Prepare("INSERT INTO TB_FILE (FILE_PK, FILE_NAME, " +
+		"FILE_DATE, FILE_PATH) VALUES (NULL, ?, ?, ?)")
 
 	if err != nil {
 		return nil, err
@@ -90,7 +98,7 @@ func (db DatabaseHandler) Insert(filename, uploadTime, filepath string) (sql.Res
 
 // Delete a database entry
 func (db DatabaseHandler) Delete(pk int) (sql.Result, error) {
-	stmt, err := db.database.Prepare("DELETE FROM TB_FILE WHERE TB_PK=?")
+	stmt, err := db.database.Prepare("DELETE FROM TB_FILE WHERE FILE_PK=?")
 
 	if err != nil {
 		return nil, err

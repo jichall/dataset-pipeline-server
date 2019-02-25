@@ -1,14 +1,13 @@
 package main
 
 import (
-	"log"
 	_ "os"
 	"strconv"
 	"testing"
 	"time"
 )
 
-func TestInsertion(*testing.T) {
+func TestInsertion(t *testing.T) {
 
 	db := GetHandler("test")
 
@@ -16,37 +15,35 @@ func TestInsertion(*testing.T) {
 		"PRIMARY KEY, FILE_NAME CHAR(1024), FILE_DATE " +
 		"CHAR(1024), FILE_PATH CHAR(1024));"
 
-	log.Printf("[+] Creating the storage table")
-
 	stmt, err := db.database.Prepare(table)
 
 	if err != nil {
-		log.Fatalf("[!] Error while creating the test storage table. Cause: %s",
+		t.Fatalf("[!] Error while creating the test storage table. Cause: %s",
 			err.Error())
 	}
 
 	_, err = stmt.Exec()
 
-	for i := 0; i < 50; i++ {
+	for i := 0; i < 4; i++ {
 		filename := "json_file_" + strconv.Itoa(i)
 		_, err := db.Insert(filename, time.Now().String(),
 			"/uploads/"+filename)
 
 		if err != nil {
-			log.Fatalf("[!] Failed to insert data into the table. Cause: %s",
+			t.Fatalf("[!] Failed to insert data into the table. Cause: %s",
 				err.Error())
 		}
 	}
 }
 
-func TestRemoval(*testing.T) {
+func TestRemoval(t *testing.T) {
 
 	db := GetHandler("test")
 
 	res, err := db.Insert("test_removal", time.Now().String(), "")
 
 	if err != nil {
-		log.Fatalf("[!] Failed to insert data into the table. Cause: %s",
+		t.Fatalf("[!] Failed to insert data into the table. Cause: %s",
 			err.Error())
 	}
 
@@ -56,9 +53,9 @@ func TestRemoval(*testing.T) {
 	_, err = db.Delete(int(pk))
 
 	if err != nil {
-		log.Fatalf("[!] Failed to delete data from the table. Cause: %s",
+		t.Fatalf("[!] Failed to delete data from the table. Cause: %s",
 			err.Error())
 	}
 }
 
-func TestRetrieve(*testing.T) {}
+func TestRetrieve(t *testing.T) {}
