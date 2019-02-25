@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>Neoway Assignment Test</title>
+    <meta charset="utf-8" />
+
+    <link rel="stylesheet" type="text/css" href="./res/css/theme.css">
+  </head>
+
+  <body>
+    <nav>
+      <ul>
+        <li><a href="">Home</a></li>
+        <li><a href="">Files</a></li>
+      </ul>
+    </nav>
+
+    <h1>Dataset pipeline</h1>
+
+    <form enctype="multipart/form-data" action="/upload" method="post">
+      <label>Place the files on the input below</label><br><br>
+      <input type="file" name="upload" accept=".txt,.json" multiple>
+      <input type="hidden" name="token" value="{{.}}"/>
+      <button type="submit" >upload</button>
+    </form>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+* {
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+body {
+    font-family: 'Raleway', sans-serif;
+}
