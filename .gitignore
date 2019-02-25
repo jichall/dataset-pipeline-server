@@ -8,3 +8,7 @@
 # Compressed files
 *.tar.*
 *.zip
+
+# Databases
+*.sql
+*.db
