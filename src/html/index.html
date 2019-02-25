@@ -1,27 +1,51 @@
 <!DOCTYPE HTML>
 <html>
   <head>
+    <meta charset="utf-8">
     <title>Neoway Assignment Test</title>
-    <meta charset="utf-8" />
 
-    <link rel="stylesheet" type="text/css" href="./res/css/theme.css">
+    <link rel="stylesheet" type="text/css" href="/res/css/theme.css">
+    <link rel="stylesheet" type="text/css" href="/res/css/file_upload.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+
+    <link id="favicon" rel="shortcut icon" type="image/png" href="favicon.png">
+
+    <meta name="viewport" content="width=device-width,initial-scale=1">
   </head>
 
   <body>
     <nav>
       <ul>
-        <li><a href="">Home</a></li>
-        <li><a href="">Files</a></li>
+        <li><img src="res/img/logo-mark.svg" width="64" height="25"></li>
+        <li><a href="/" class="active">Home</a></li>
+        <li><a href="/sent">Files</a></li>
       </ul>
     </nav>
 
-    <h1>Dataset pipeline</h1>
+    <section>
+      <h1>Welcome to the data server</h1>
 
-    <form enctype="multipart/form-data" action="/upload" method="post">
-      <label>Place the files on the input below</label><br><br>
-      <input type="file" name="upload" accept=".txt,.json" multiple>
-      <input type="hidden" name="token" value="{{.}}"/>
-      <button type="submit" >upload</button>
-    </form>
+      <p>
+        Send some json formatted files to the server now. The extensions accepted by the
+        software are .txt and .json
+      </p>
+
+      <form enctype="multipart/form-data" action="/upload" method="post">
+        <label>Select files using the input below</label>
+        <div class="input-button-selection">
+          <input type="text" id="upload-filename" class="disable"
+                 placeholder="Choose File" disabled>
+          <label class="file-upload">
+            <input type="file" name="upload" id="upload" accept=".txt,.json"
+                   class="upload" multiple>
+            <span class="upload-button"><i class="fa fa-2x fa-upload"></i></span>
+          </label>
+        </div>
+        <input type="hidden" name="token" value="{{.}}"/>
+        <button type="submit" id="submit" class="button button-default">upload</button>
+      </form>
+    </section>
+
+    <script type="text/javascript" src="/res/js/upload.js"></script>
   </body>
 </html>

@@ -1,0 +1,57 @@
+/* The credit goes to http://jsfiddle.net/rohitazadwincere/6c1ak9t4/6/ */
+/* Some modifications where made to make it better */
+
+.input-button-selection {
+    font-size: 0;
+    vertical-align: top;
+    display: inline-block;
+}
+
+.disable {
+    display:inline-block;
+    vertical-align:top;
+    margin: 0;
+    font-size:14px;
+    padding:16px 2px;
+    background: rgb(250, 250, 250);
+    border: 1px solid #ef8642;
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
+}
+
+.upload-button {
+    font-size: 14px;
+    padding: 11px 10px;
+    vertical-align:top;
+    display:inline-block;
+    background: #ef8642;
+}
+
+.upload-file {
+    font-family: Raleway, sans-serif;
+}
+
+.file-upload {
+    overflow: hidden;
+	  position: relative;
+    vertical-align: top;
+    display: inline-block;
+    border-top-right-radius: 2px;
+    border-bottom-right-radius: 2px;
+}
+
+.file-upload input.upload {
+    top: 0;
+    right: 0;
+    margin: 0;
+    padding: 10px 0;
+    opacity: 0;
+    font-size: 20px;
+    cursor: pointer;
+    position: absolute;
+    filter: alpha(opacity=0);
+}
+
+input[type="text"] {
+    padding-left: 10px !important;
+}
