@@ -6,4 +6,4 @@ all:
 	go run $(SRC)
 
 test:
-	go test *.go
+	go test src/*.go
