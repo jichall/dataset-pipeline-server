@@ -1,7 +1,7 @@
 CC=go
 FLAGS=
 SRC=database.go file.go main.go rest.go server.go uio.go
-EXEC=server
+EXEC=server.out
 
 all:
 	go run $(SRC)
