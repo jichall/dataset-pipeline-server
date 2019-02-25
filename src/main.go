@@ -9,12 +9,14 @@ var (
 	addr   string
 	port   string
 	deploy bool
+	debug  bool
 )
 
 func init() {
 	flag.StringVar(&addr, "a", "127.0.0.1", "Set the address of the server, if deploy variable is true this variable is ignored.")
 	flag.StringVar(&port, "p", "4000", "Set the port of the server.")
 	flag.BoolVar(&deploy, "d", false, "If the deploy variable is set, the ip address of the server will be set to 0.0.0.0 to make it available to everyone in the network")
+	flag.BoolVar(&debug, "v", false, "Activates verbose output")
 }
 
 func main() {
