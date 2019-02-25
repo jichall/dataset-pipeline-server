@@ -1,8 +1,6 @@
 package main
 
 import (
-	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	_ "os"
 	"strconv"
@@ -12,34 +10,55 @@ import (
 
 func TestInsertion(*testing.T) {
 
-	db, err := sql.Open("sqlite3", "./database/test.db")
+	db := GetHandler("test")
 
-	if err != nil {
-		log.Fatalf("[!] Something went wrong trying to open the database %s",
-			err.Error())
-	}
-
-	var table string = "CREATE TABLE IF NOT EXISTS TB_FILE (FILE_PK INTEGER" +
-		"PRIMARY KEY AUTO_INCREMENT, FILE_NAME CHAR(1024), FILE_DATE " +
+	var table string = "CREATE TABLE IF NOT EXISTS TB_FILE (FILE_PK INTEGER " +
+		"PRIMARY KEY, FILE_NAME CHAR(1024), FILE_DATE " +
 		"CHAR(1024), FILE_PATH CHAR(1024));"
 
 	log.Printf("[+] Creating the storage table")
 
-	stmt, err := db.Prepare(table)
+	stmt, err := db.database.Prepare(table)
+
+	if err != nil {
+		log.Fatalf("[!] Error while creating the test storage table. Cause: %s",
+			err.Error())
+	}
+
 	_, err = stmt.Exec()
 
-	dh := DatabaseHander{db}
-
-	for i := 0; i < 1000; i++ {
-		_, err := dh.Insert("json_file_"+strconv.Itoa(i),
-			time.Now().Format("%D/%M/%Y %h:%m:s"), "/uploads/")
+	for i := 0; i < 50; i++ {
+		filename := "json_file_" + strconv.Itoa(i)
+		_, err := db.Insert(filename, time.Now().String(),
+			"/uploads/"+filename)
 
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatalf("[!] Failed to insert data into the table. Cause: %s",
+				err.Error())
 		}
 	}
 }
 
 func TestRemoval(*testing.T) {
 
+	db := GetHandler("test")
+
+	res, err := db.Insert("test_removal", time.Now().String(), "")
+
+	if err != nil {
+		log.Fatalf("[!] Failed to insert data into the table. Cause: %s",
+			err.Error())
+	}
+
+	// I gonna ignore the error for this expression for now (FIXME)
+	pk, _ := res.LastInsertId()
+
+	_, err = db.Delete(int(pk))
+
+	if err != nil {
+		log.Fatalf("[!] Failed to delete data from the table. Cause: %s",
+			err.Error())
+	}
 }
+
+func TestRetrieve(*testing.T) {}
