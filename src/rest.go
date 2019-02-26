@@ -1,9 +1,13 @@
 package main
 
+//
+// This files handles all the routes that have been requested by the client. It
+// is a like a REST interface.
+//
+
 import (
 	"fmt"
 	"html/template"
-
 	"log"
 	_ "math"
 	"net/http"
@@ -46,7 +50,31 @@ func HandleRoot(w http.ResponseWriter, r *http.Request) {
 func HandleSent(w http.ResponseWriter, r *http.Request) {
 	// Read from the database every file that has been uploaded and sent it
 	// back to the client.
-	handle("sent", w, r)
+
+	rows, err := GetHandler().Select()
+
+	if err != nil {
+		w.WriteHeader(500)
+		fmt.Fprint(w, "Internal server error (500)")
+		log.Printf("[!] Error trying to retrieve information %s", err.Error())
+	}
+
+	defer rows.Close()
+
+	var row DataRow
+
+	// Writing the table header
+	fmt.Fprintf(w, "%s", "FILENAME\t\tPK\t\tSCORE\n")
+	for rows.Next() {
+		err = rows.Scan(&row.filename, &row.pk, &row.score)
+
+		if err != nil {
+			log.Printf("[!] Some error ocurred reading data from the DB. Cause %s",
+				err.Error())
+		} else {
+			fmt.Fprintf(w, "%s\t\t\t%s\t\t%s\n", row.filename, row.pk, row.score)
+		}
+	}
 }
 
 func HandleUpload(w http.ResponseWriter, r *http.Request) {
@@ -70,11 +98,20 @@ func HandleUpload(w http.ResponseWriter, r *http.Request) {
 			}
 
 			defer file.Close()
-			// Saves the file on the uploads folder
-			Save(file, handler.Filename)
 
 			// TODO: Return the status of the upload through websockets
 			fmt.Fprintf(w, "%s", "The data has been sent.")
+
+			// This piece of code might below take longer on big files,
+			// something else might be implemented to make this work faster and
+			// non blocking.
+
+			// Saves the file on the uploads folder
+			go func() {
+				filename := Save(file, handler.Filename)
+				// Persist the file on the database
+				Persist(filename)
+			}()
 
 		} else {
 			// No file was sent, inform the client using websockets. Currently

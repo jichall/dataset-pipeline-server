@@ -10,18 +10,20 @@ import (
 const (
 	folder   string = "database"
 	database string = "data.db"
+	table    string = "CREATE TABLE IF NOT EXISTS TB_DATA" +
+		"(DATA_FILENAME CHAR(1024), DATA_PK VARCHAR(1024), " +
+		"DATA_SCORE VARCHAR(1024))"
 )
 
 type DatabaseHandler struct {
 	database *sql.DB
 }
 
-// A struct  that denotes a row in the database
+// A struct that denotes a row in the database
 type DataRow struct {
-	pk         int
-	filename   string
-	uploadTime string
-	path       string
+	filename string
+	pk       string
+	score    string
 }
 
 func InitDatabase() {
@@ -32,10 +34,6 @@ func InitDatabase() {
 	}
 
 	db := GetHandler()
-
-	var table string = "CREATE TABLE IF NOT EXISTS TB_FILE (FILE_PK INTEGER" +
-		"PRIMARY KEY AUTO_INCREMENT, FILE_NAME CHAR(1024), FILE_DATE " +
-		"CHAR(1024), FILE_PATH CHAR(1024));"
 
 	log.Printf("[+] Creating the storage table")
 
@@ -69,41 +67,35 @@ func GetHandler(params ...string) *DatabaseHandler {
 	return &DatabaseHandler{db}
 }
 
-// Retrieve information from the default database. Additional settings may
+// Select information from the default database. Additional settings may
 // be included using the params argument such as a where clause.
-func (db DatabaseHandler) Retrieve(params ...string) (sql.Result, error) {
+func (db DatabaseHandler) Select(params ...string) (*sql.Rows, error) {
 
-	stmt, err := db.database.Prepare("SELECT * FROM TB_FILE" + params[0])
+	var query string = "SELECT * FROM TB_DATA "
+
+	if len(params) != 0 {
+		query = query + params[0]
+	}
+
+	rows, err := db.database.Query(query)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return stmt.Exec()
+	return rows, nil
 }
 
-// Adds a database entry
-func (db DatabaseHandler) Insert(filename, uploadTime, filepath string) (sql.Result, error) {
-
+// Adds an entry to the database
+func (db DatabaseHandler) Insert(filename, pk, score string) (sql.Result, error) {
 	// A NULL value must be included to make usage of the FILE_PK variable that
 	// is an auto increment field automatically in sqlite
-	stmt, err := db.database.Prepare("INSERT INTO TB_FILE (FILE_PK, FILE_NAME, " +
-		"FILE_DATE, FILE_PATH) VALUES (NULL, ?, ?, ?)")
+	stmt, err := db.database.Prepare("INSERT INTO TB_DATA (DATA_FILENAME, " +
+		"DATA_PK, DATA_SCORE) VALUES (?, ?, ?)")
 
 	if err != nil {
 		return nil, err
 	}
 
-	return stmt.Exec(filename, uploadTime, filepath)
-}
-
-// Delete a database entry
-func (db DatabaseHandler) Delete(pk int) (sql.Result, error) {
-	stmt, err := db.database.Prepare("DELETE FROM TB_FILE WHERE FILE_PK=?")
-
-	if err != nil {
-		return nil, err
-	}
-
-	return stmt.Exec(pk)
+	return stmt.Exec(filename, pk, score)
 }
