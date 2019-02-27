@@ -10,6 +10,7 @@ build:
 	go build -o $(EXEC)
 
 test:
+	rm database/test.db
 	go test -v *.go
 
 clean:
