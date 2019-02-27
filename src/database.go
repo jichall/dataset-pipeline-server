@@ -11,7 +11,7 @@ const (
 	folder   string = "database"
 	database string = "data.db"
 	table    string = "CREATE TABLE IF NOT EXISTS TB_DATA" +
-		"(DATA_FILENAME CHAR(1024), DATA_PK VARCHAR(1024), " +
+		"(DATA_FILENAME CHAR(1024), DATA_PK VARCHAR(1024) PRIMARY KEY, " +
 		"DATA_SCORE VARCHAR(1024))"
 )
 
