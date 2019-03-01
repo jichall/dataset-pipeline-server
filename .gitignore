@@ -6,9 +6,12 @@
 .\#*.*
 
 # Compressed files
-*.tar.*
-*.zip
+*/*.tar.*
+*/*.zip
 
 # Databases
 *.sql
 *.db
+
+# Build files
+*.out
