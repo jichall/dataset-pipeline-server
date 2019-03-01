@@ -59,7 +59,7 @@ func TestDatabase(t *testing.T) {
 
 	dh := GetHandler("test")
 
-	stmt, err := dh.database.Prepare(table)
+	stmt, err := dh.database.Prepare(testTable)
 
 	if err != nil {
 		t.Fatalf("[!] Error while creating the test storage table. Cause: %s",
