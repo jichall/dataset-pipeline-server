@@ -11,6 +11,7 @@ import (
 
 var (
 	pages map[string]func(http.ResponseWriter, *http.Request)
+	rest  map[string]func(http.ResponseWriter, *http.Request, string)
 )
 
 // Dataset Pipeline Server Handler
@@ -29,11 +30,19 @@ func InitServer(addr string, port string) {
 	}
 
 	pages = make(map[string]func(http.ResponseWriter, *http.Request))
+	rest = make(map[string]func(http.ResponseWriter, *http.Request, string))
 
 	pages["/"] = HandleRoot
 	pages["/index"] = HandleRoot
 	pages["/upload"] = HandleUpload
 	pages["/sent"] = HandleSent
+	pages["/404"] = HandleNotFound
+
+	// Rest API
+	// /v1/new?filename=xxx.txt&pk=xxx&score=xxx
+	// /v1/get?pk=xxx
+	rest["/v1/new"] = HandleNewRecord
+	rest["/v1/get"] = HandleSelectRecord
 
 	err := server.ListenAndServe()
 
@@ -49,6 +58,16 @@ func (*DPServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h, ok := pages[r.URL.String()]; ok {
 		h(w, r)
 	} else {
+		// This is a hack because I'm implementing my own mux. It shouldn't be
+		// like this. It's better to use gorilla/mux instead, but it's too late
+		// to do it now.
+		for i := range rest {
+			if strings.HasPrefix(r.URL.String(), i) {
+				rest[i](w, r, r.URL.String())
+				return
+			}
+		}
+
 		// Verify the MIME type of the requested file
 		filepath := strings.Split(r.URL.String(), "/")
 		filename := ""
@@ -78,8 +97,12 @@ func (*DPServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add("Content-Type", mimeType)
 			w.Write(file.Body)
 		} else {
-			log.Printf("[!] Error requesting the file %s. Cause %s",
-				filepath[1], err.Error())
+			if strings.HasSuffix(Filepath(filename), ".html") {
+				HandleNotFound(w, r)
+			} else {
+				log.Printf("[!] Error requesting the file %s. Cause %s",
+					filepath[1], err.Error())
+			}
 		}
 	}
 }

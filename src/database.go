@@ -44,6 +44,8 @@ func InitDatabase() {
 		log.Fatalf("[!] Some error occurred trying to create the file table %v",
 			err.Error())
 	}
+
+	stmt.Close()
 }
 
 // Gets a database handler, if any argument is provided it expects
@@ -97,5 +99,6 @@ func (db DatabaseHandler) Insert(filename, pk, score string) (sql.Result, error)
 		return nil, err
 	}
 
+	defer stmt.Close()
 	return stmt.Exec(filename, pk, score)
 }

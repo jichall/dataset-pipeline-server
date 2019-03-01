@@ -13,5 +13,8 @@ test:
 	rm database/test.db -f
 	go test -v *.go
 
+debug:
+	go run $(SRC) -v
+
 clean:
 	rm database/*.db

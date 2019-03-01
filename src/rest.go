@@ -9,8 +9,9 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-	_ "math"
 	"net/http"
+	"net/url"
+	"strconv"
 )
 
 // Handles all the requests sent by the client
@@ -64,7 +65,9 @@ func HandleSent(w http.ResponseWriter, r *http.Request) {
 	var row DataRow
 
 	// Writing the table header
-	fmt.Fprintf(w, "%s", "FILENAME\t\tPK\t\tSCORE\n")
+	fmt.Fprintf(w, "%s", "FILENAME\t\t\t\t\tPK\t\tSCORE\n")
+	fmt.Fprintf(w, "%s", "--------\t\t\t\t\t--\t\t-----\n")
+
 	for rows.Next() {
 		err = rows.Scan(&row.filename, &row.pk, &row.score)
 
@@ -72,7 +75,7 @@ func HandleSent(w http.ResponseWriter, r *http.Request) {
 			log.Printf("[!] Some error ocurred reading data from the DB. Cause %s",
 				err.Error())
 		} else {
-			fmt.Fprintf(w, "%s\t\t\t%s\t\t%s\n", row.filename, row.pk, row.score)
+			fmt.Fprintf(w, "%-47s %-15s %s \n", row.filename, row.pk, row.score)
 		}
 	}
 }
@@ -97,26 +100,100 @@ func HandleUpload(w http.ResponseWriter, r *http.Request) {
 				log.Fatalf("[!] Some error has ocurred: %v", err.Error())
 			}
 
-			defer file.Close()
-
 			// TODO: Return the status of the upload through websockets
-			fmt.Fprintf(w, "%s", "The data has been sent.")
+			fmt.Fprintf(w, "%s", "The data has been sent and it's being "+
+				" processed on queue. Grab a coffee or make a new "+
+				"upload.")
 
 			// This piece of code might below take longer on big files,
 			// something else might be implemented to make this work faster and
 			// non blocking.
 
 			// Saves the file on the uploads folder
-			go func() {
-				filename := Save(file, handler.Filename)
-				// Persist the file on the database
-				Persist(filename)
-			}()
+			filename := Save(file, handler.Filename)
+			file.Close()
+
+			// Persist the file on the database
+			Persist(filename)
 
 		} else {
 			// No file was sent, inform the client using websockets. Currently
 			// I'm just sending him to the index page.
 			handle("index", w, r)
+		}
+	}
+}
+
+func HandleNotFound(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(404)
+	handle("404", w, r)
+}
+
+// REST API Below
+
+func HandleNewRecord(w http.ResponseWriter, r *http.Request, request string) {
+	p, err := url.Parse(request)
+
+	if err != nil {
+		log.Fatalf("[!] Couldn't parse URL. Cause %s", err.Error())
+	}
+
+	q := p.Query()
+
+	// Some checks would have to be done to certify that the pk and score are
+	// a number.
+	filename := q["filename"]
+	pk := q["pk"]
+	score := q["score"]
+
+	res, err := GetHandler().Insert(filename[0], pk[0], score[0])
+
+	if err != nil {
+		fmt.Fprintf(w, "%s %s", "Error trying to persist the data sent. Cause ",
+			err.Error())
+	} else {
+		rows, _ := res.RowsAffected()
+		fmt.Fprintf(w, "Data was persisted successfully with %d rows affected",
+			int(rows))
+	}
+}
+
+func HandleSelectRecord(w http.ResponseWriter, r *http.Request, request string) {
+	p, err := url.Parse(request)
+
+	if err != nil {
+		log.Fatalf("[!] Couldn't parse URL. Cause %s", err.Error())
+	}
+
+	q := p.Query()
+	pk := q["pk"]
+
+	// If the token can't be convertd to int it isn't a valid query
+	_, err = strconv.Atoi(pk[0])
+	if err != nil {
+		fmt.Fprintf(w, "%s", "Invalid token sent, it must be numbers only")
+		return
+	}
+
+	rows, err := GetHandler().Select("WHERE DATA_PK=" + pk[0])
+
+	if err != nil {
+		w.WriteHeader(500)
+		fmt.Fprint(w, "Internal server error (500)")
+		log.Printf("[!] Error trying to retrieve information %s", err.Error())
+	}
+
+	var row DataRow
+
+	for rows.Next() {
+		err = rows.Scan(&row.filename, &row.pk, &row.score)
+
+		if err != nil {
+			log.Printf("[!] Some error ocurred reading data from the DB. Cause %s",
+				err.Error())
+		} else {
+			fmt.Fprintf(w, "%s: [pk: %s score: %s]\n", row.filename, row.pk,
+				row.score)
 		}
 	}
 }

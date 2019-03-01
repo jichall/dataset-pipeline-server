@@ -22,14 +22,15 @@ func init() {
 func main() {
 	flag.Parse()
 
+	log.Print("[+] Initializing database\n")
+	InitDatabase()
+
 	if deploy {
 		log.Print("[+] Server running on 0.0.0.0:" + port + "\n")
 		InitServer("0.0.0.0", port)
 	}
 
-	log.Print("[+] Initializing database\n")
-	InitDatabase()
-	log.Print("[+] Initializing server on " + addr + ":" + port + "\n")
+	log.Print("[+] Server running on " + addr + ":" + port + "\n")
 	InitServer(addr, port)
 
 }
