@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	dropTable string = "DROP TABLE IF EXISTS TB_DATA"
 	testTable string = "CREATE TABLE TB_DATA (DATA_FILENAME CHAR(1024), " +
 		"DATA_PK VARCHAR(1024) PRIMARY KEY, " +
 		"DATA_SCORE VARCHAR(1024))"
@@ -59,6 +60,7 @@ func TestDatabase(t *testing.T) {
 
 	dh := GetHandler("test")
 
+	dh.database.Exec(dropTable)
 	stmt, err := dh.database.Prepare(testTable)
 
 	if err != nil {
