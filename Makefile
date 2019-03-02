@@ -19,9 +19,12 @@ test:
 debug:
 	cd src && go run $(SRC) -v
 
-ci:
+docker_ci:
 	docker build -t dps .
 	docker run -t --entrypoint=make dps test
+
+docker_run:
+	docker run -t dps
 
 clean:
 	rm database/*.db

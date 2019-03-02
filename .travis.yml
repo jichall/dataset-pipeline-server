@@ -2,4 +2,4 @@ services:
   - docker
 
 script:
-  make ci
+  make docker_ci
