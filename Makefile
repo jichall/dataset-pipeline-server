@@ -24,7 +24,7 @@ docker_ci:
 	docker run -t --entrypoint=make dps test
 
 docker_run:
-	docker run -t dps
+	docker run --network=host -it dps
 
 clean:
 	rm database/*.db
