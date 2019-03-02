@@ -9,6 +9,9 @@ all:
 build:
 	cd src && go build -o $(EXEC)
 
+deploy:
+	cd src && go run $(FLAGS) $(SRC) -d
+
 test:
 	rm database/test.db -f
 	cd src && go test -v *.go
@@ -17,7 +20,8 @@ debug:
 	cd src && go run $(SRC) -v
 
 ci:
-	docker run --entrypoint=cd src && go test -v
+	docker build -t dps .
+	docker run -t --entrypoint=make dps test
 
 clean:
 	rm database/*.db
