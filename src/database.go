@@ -15,6 +15,8 @@ const (
 		"DATA_SCORE VARCHAR(1024))"
 )
 
+/// The struct responsible to encapsulate the sql.DB struct in which
+// callers might use to call functions that operate on the database.
 type DatabaseHandler struct {
 	database *sql.DB
 }
