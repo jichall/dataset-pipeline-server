@@ -9,45 +9,10 @@ import (
 	"github.com/gorilla/mux"
 
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"strconv"
 )
-
-// Handles all the requests sent by the client
-func handle(title string, w http.ResponseWriter, r *http.Request) {
-
-	page, err := Load(title)
-
-	if err == nil {
-		render(w, Filepath(title), page)
-	} else {
-		log.Printf("[!] The page \"%s\" couldn't be loaded. Reason: %v",
-			Filepath(title), err)
-
-	}
-}
-
-// Renders the webpage using the template available through the
-// html/template package
-func render(w http.ResponseWriter, filepath string, p *Page) {
-	t, err := template.ParseFiles(filepath)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-	err = t.Execute(w, p)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func HandleRoot(w http.ResponseWriter, r *http.Request) {
-	handle("index", w, r)
-}
 
 func HandleSent(w http.ResponseWriter, r *http.Request) {
 	// Read from the database every file that has been uploaded and sent it
@@ -81,50 +46,6 @@ func HandleSent(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleUpload(w http.ResponseWriter, r *http.Request) {
-	// Only accepts POST method when uploading
-	if r.Method == "POST" {
-		// Max file size equals to the size in bytes of an int 64, maybe it is
-		// to big (?).
-		r.ParseMultipartForm(32 << 20)
-		file, handler, err := r.FormFile("upload")
-
-		if handler.Size > 0 {
-			// There's no way to receive multiple files because of the incorrect
-			// request made by the page. There has to be implemented on the web
-			// page a way to submit n-input files (but I'm not doing it now and
-			// letting it as a TODO.
-			log.Printf("[+] File(s) received: %s|%d\n", handler.Filename,
-				handler.Size)
-
-			if err != nil {
-				log.Fatalf("[!] Some error has ocurred: %v", err.Error())
-			}
-
-			// TODO: Return the status of the upload through websockets
-			fmt.Fprintf(w, "%s", "The data has been sent and it's being "+
-				" processed on queue. Grab a coffee or make a new "+
-				"upload.")
-
-			// This piece of code might below take longer on big files,
-			// something else might be implemented to make this work faster and
-			// non blocking.
-
-			// Saves the file on the uploads folder
-			filename := Save(file, handler.Filename)
-			file.Close()
-
-			// Persist the file on the database
-			Persist(filename)
-
-		} else {
-			// No file was sent, inform the client using websockets. Currently
-			// I'm just sending him to the index page.
-			handle("index", w, r)
-		}
-	}
-}
-
 // REST API Below
 
 func HandleNewRecord(w http.ResponseWriter, r *http.Request) {
@@ -142,8 +63,6 @@ func HandleNewRecord(w http.ResponseWriter, r *http.Request) {
 			"order to use the new record method.")
 		return
 	}
-
-	fmt.Printf("[++} f: %s pk: %s score: %s \n\n", filename, pk, score)
 
 	res, err := GetHandler().Insert(filename, pk, score)
 

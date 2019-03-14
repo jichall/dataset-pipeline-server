@@ -1,6 +1,6 @@
 CC=go
 FLAGS=
-SRC=database.go file.go main.go rest.go server.go uio.go
+SRC=database.go main.go rest.go server.go uio.go
 EXEC=server.out
 
 all:
