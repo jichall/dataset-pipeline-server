@@ -6,11 +6,12 @@ package main
 //
 
 import (
+	"github.com/gorilla/mux"
+
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 )
 
@@ -124,29 +125,27 @@ func HandleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleNotFound(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(404)
-	handle("404", w, r)
-}
-
 // REST API Below
 
-func HandleNewRecord(w http.ResponseWriter, r *http.Request, request string) {
-	p, err := url.Parse(request)
+func HandleNewRecord(w http.ResponseWriter, r *http.Request) {
+	optional := r.URL.Query()
+
+	filename := optional.Get("filename")
+	pk := optional.Get("pk")
+	score := optional.Get("score")
+
+	_, err := strconv.Atoi(pk)
+	_, err = strconv.Atoi(score)
 
 	if err != nil {
-		log.Fatalf("[!] Couldn't parse URL. Cause %s", err.Error())
+		fmt.Fprintf(w, "%s", "Invalid request. Look at the documentation in "+
+			"order to use the new record method.")
+		return
 	}
 
-	q := p.Query()
+	fmt.Printf("[++} f: %s pk: %s score: %s \n\n", filename, pk, score)
 
-	// Some checks would have to be done to certify that the pk and score are
-	// a number.
-	filename := q["filename"]
-	pk := q["pk"]
-	score := q["score"]
-
-	res, err := GetHandler().Insert(filename[0], pk[0], score[0])
+	res, err := GetHandler().Insert(filename, pk, score)
 
 	if err != nil {
 		fmt.Fprintf(w, "%s %s", "Error trying to persist the data sent. Cause ",
@@ -158,24 +157,27 @@ func HandleNewRecord(w http.ResponseWriter, r *http.Request, request string) {
 	}
 }
 
-func HandleSelectRecord(w http.ResponseWriter, r *http.Request, request string) {
-	p, err := url.Parse(request)
+func HandleSelectRecord(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
 
-	if err != nil {
-		log.Fatalf("[!] Couldn't parse URL. Cause %s", err.Error())
-	}
+	pk, ok := vars["pk"]
 
-	q := p.Query()
-	pk := q["pk"]
-
-	// If the token can't be convertd to int it isn't a valid query
-	_, err = strconv.Atoi(pk[0])
-	if err != nil {
-		fmt.Fprintf(w, "%s", "Invalid token sent, it must be numbers only")
+	if !ok {
+		fmt.Fprintf(w, "%s", "Invalid request. Look at the documentation in "+
+			"order to use the select record method.")
 		return
 	}
 
-	rows, err := GetHandler().Select("WHERE DATA_PK=" + pk[0])
+	// If the token can't be convertd to int it isn't a valid query
+	// meaning it contains characters.
+	_, err := strconv.Atoi(pk)
+	if err != nil {
+		fmt.Fprintf(w, "%s", "Invalid token sent, it must be numbers only.")
+		return
+	}
+
+	// FIXME: There's a bug with pk that begins with zero.
+	rows, err := GetHandler().Select("WHERE DATA_PK=" + pk)
 
 	if err != nil {
 		w.WriteHeader(500)
@@ -189,8 +191,8 @@ func HandleSelectRecord(w http.ResponseWriter, r *http.Request, request string) 
 		err = rows.Scan(&row.filename, &row.pk, &row.score)
 
 		if err != nil {
-			log.Printf("[!] Some error ocurred reading data from the DB. Cause %s",
-				err.Error())
+			log.Printf("[!] Some error ocurred reading data from the DB. "+
+				"Cause %s", err.Error())
 		} else {
 			fmt.Fprintf(w, "%s: [pk: %s score: %s]\n", row.filename, row.pk,
 				row.score)
