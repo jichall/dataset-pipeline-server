@@ -1,4 +1,4 @@
-% Created 2019-03-01 sex 23:36
+% Created 2019-03-04 seg 23:51
 % Intended LaTeX compiler: pdflatex
 \documentclass[a4paper, 12pt]{article}
 \usepackage[utf8]{inputenc}
@@ -43,7 +43,7 @@
 
 
 \section{Introdução}
-\label{sec:orga211026}
+\label{sec:orgb461cda}
 
 Esta aplicação faz parte de uma interface conjunta que é o \emph{dataset pipeline
 client}, embora esteja em outro repositório. O objetivo desta é prover um
@@ -52,7 +52,7 @@ armazenamento deles em disco local, além de também ter persistência em um ban
 de dados local (sqlite).
 
 \section{O Servidor}
-\label{sec:org1ef9d94}
+\label{sec:org7072890}
 
 O servidor HTTP foi criado utilizando o pacote \emph{net/http} que fornece vários
 recursos que auxiliam a disponibilização de um. O servidor recebe uma requisição
@@ -70,7 +70,7 @@ O acesso ao servidor pode ser feita utilizando um browser ou a API REST,
 disponibilizei duas formas para aumentar a usabilidade da ferramenta.
 
 \section{O Banco de Dados}
-\label{sec:org7874848}
+\label{sec:orgcfb12c7}
 
 Ao realizar a tarefa responsável por persistir os dados recebidos pelo servidor
 foi escolhido o tipo de persistência que seria desenvolvida. Uma de duas opções
@@ -103,7 +103,7 @@ com a assinatura \(GetHandler(params ...string)\), que permite realizar as funç
 de inserção e seleção no banco de dados.
 
 \section{A API}
-\label{sec:org7b9bc72}
+\label{sec:org7920272}
 
 A API REST contém dois recursos, o recurso \emph{get} e o recurso \emph{new}. Os dois
 recursos podem ser requisitados com um GET ao endereço do servidor utilizando
@@ -118,7 +118,7 @@ O servidor é encarregado ou de buscar o valor correspondendo a chave \emph{pk} 
 a salvar a nova entrada dada pelos atributos da requisição.
 
 \section{Conclusão}
-\label{sec:org99d8474}
+\label{sec:orgd4d71a2}
 
 Muitas coisas poderiam ser feitas, inclusiva a melhoria em performance utilizando
 \emph{goroutines}. Entretanto, devido ao tempo hábil pequeno e eu estar me locomovendo
