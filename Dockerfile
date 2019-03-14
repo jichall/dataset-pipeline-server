@@ -6,8 +6,6 @@ RUN apt update
 RUN apt install sqlite3 -y
 RUN go get github.com/mattn/go-sqlite3
 
-#ENV GOPATH '/go/'
-
 WORKDIR $GOPATH/src/github.com/rafaelcn/dataset-pipeline-server/
 
 COPY . .
