@@ -6,47 +6,13 @@ package main
 //
 
 import (
+	"github.com/gorilla/mux"
+
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 )
-
-// Handles all the requests sent by the client
-func handle(title string, w http.ResponseWriter, r *http.Request) {
-
-	page, err := Load(title)
-
-	if err == nil {
-		render(w, Filepath(title), page)
-	} else {
-		log.Printf("[!] The page \"%s\" couldn't be loaded. Reason: %v",
-			Filepath(title), err)
-
-	}
-}
-
-// Renders the webpage using the template available through the
-// html/template package
-func render(w http.ResponseWriter, filepath string, p *Page) {
-	t, err := template.ParseFiles(filepath)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-	err = t.Execute(w, p)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func HandleRoot(w http.ResponseWriter, r *http.Request) {
-	handle("index", w, r)
-}
 
 func HandleSent(w http.ResponseWriter, r *http.Request) {
 	// Read from the database every file that has been uploaded and sent it
@@ -80,73 +46,25 @@ func HandleSent(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleUpload(w http.ResponseWriter, r *http.Request) {
-	// Only accepts POST method when uploading
-	if r.Method == "POST" {
-		// Max file size equals to the size in bytes of an int 64, maybe it is
-		// to big (?).
-		r.ParseMultipartForm(32 << 20)
-		file, handler, err := r.FormFile("upload")
-
-		if handler.Size > 0 {
-			// There's no way to receive multiple files because of the incorrect
-			// request made by the page. There has to be implemented on the web
-			// page a way to submit n-input files (but I'm not doing it now and
-			// letting it as a TODO.
-			log.Printf("[+] File(s) received: %s|%d\n", handler.Filename,
-				handler.Size)
-
-			if err != nil {
-				log.Fatalf("[!] Some error has ocurred: %v", err.Error())
-			}
-
-			// TODO: Return the status of the upload through websockets
-			fmt.Fprintf(w, "%s", "The data has been sent and it's being "+
-				" processed on queue. Grab a coffee or make a new "+
-				"upload.")
-
-			// This piece of code might below take longer on big files,
-			// something else might be implemented to make this work faster and
-			// non blocking.
-
-			// Saves the file on the uploads folder
-			filename := Save(file, handler.Filename)
-			file.Close()
-
-			// Persist the file on the database
-			Persist(filename)
-
-		} else {
-			// No file was sent, inform the client using websockets. Currently
-			// I'm just sending him to the index page.
-			handle("index", w, r)
-		}
-	}
-}
-
-func HandleNotFound(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(404)
-	handle("404", w, r)
-}
-
 // REST API Below
 
-func HandleNewRecord(w http.ResponseWriter, r *http.Request, request string) {
-	p, err := url.Parse(request)
+func HandleNewRecord(w http.ResponseWriter, r *http.Request) {
+	optional := r.URL.Query()
+
+	filename := optional.Get("filename")
+	pk := optional.Get("pk")
+	score := optional.Get("score")
+
+	_, err := strconv.Atoi(pk)
+	_, err = strconv.Atoi(score)
 
 	if err != nil {
-		log.Fatalf("[!] Couldn't parse URL. Cause %s", err.Error())
+		fmt.Fprintf(w, "%s", "Invalid request. Look at the documentation in "+
+			"order to use the new record method.")
+		return
 	}
 
-	q := p.Query()
-
-	// Some checks would have to be done to certify that the pk and score are
-	// a number.
-	filename := q["filename"]
-	pk := q["pk"]
-	score := q["score"]
-
-	res, err := GetHandler().Insert(filename[0], pk[0], score[0])
+	res, err := GetHandler().Insert(filename, pk, score)
 
 	if err != nil {
 		fmt.Fprintf(w, "%s %s", "Error trying to persist the data sent. Cause ",
@@ -158,24 +76,27 @@ func HandleNewRecord(w http.ResponseWriter, r *http.Request, request string) {
 	}
 }
 
-func HandleSelectRecord(w http.ResponseWriter, r *http.Request, request string) {
-	p, err := url.Parse(request)
+func HandleSelectRecord(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
 
-	if err != nil {
-		log.Fatalf("[!] Couldn't parse URL. Cause %s", err.Error())
-	}
+	pk, ok := vars["pk"]
 
-	q := p.Query()
-	pk := q["pk"]
-
-	// If the token can't be convertd to int it isn't a valid query
-	_, err = strconv.Atoi(pk[0])
-	if err != nil {
-		fmt.Fprintf(w, "%s", "Invalid token sent, it must be numbers only")
+	if !ok {
+		fmt.Fprintf(w, "%s", "Invalid request. Look at the documentation in "+
+			"order to use the select record method.")
 		return
 	}
 
-	rows, err := GetHandler().Select("WHERE DATA_PK=" + pk[0])
+	// If the token can't be convertd to int it isn't a valid query
+	// meaning it contains characters.
+	_, err := strconv.Atoi(pk)
+	if err != nil {
+		fmt.Fprintf(w, "%s", "Invalid token sent, it must be numbers only.")
+		return
+	}
+
+	// FIXME: There's a bug with pk that begins with zero.
+	rows, err := GetHandler().Select("WHERE DATA_PK=" + pk)
 
 	if err != nil {
 		w.WriteHeader(500)
@@ -189,8 +110,8 @@ func HandleSelectRecord(w http.ResponseWriter, r *http.Request, request string) 
 		err = rows.Scan(&row.filename, &row.pk, &row.score)
 
 		if err != nil {
-			log.Printf("[!] Some error ocurred reading data from the DB. Cause %s",
-				err.Error())
+			log.Printf("[!] Some error ocurred reading data from the DB. "+
+				"Cause %s", err.Error())
 		} else {
 			fmt.Fprintf(w, "%s: [pk: %s score: %s]\n", row.filename, row.pk,
 				row.score)
